@@ -229,7 +229,7 @@ public class CryptoModule {
     public long raiseToPowWithNewOp(long pow) {
         return this.raiseToPowWithNewOp(Long.parseLong(configuration.getAlpha()), pow);
     }
-
+//
     public long getMultiplyNeutral() {
         long k = Long.parseLong(configuration.getK());
         long m = Long.parseLong(configuration.getM());
