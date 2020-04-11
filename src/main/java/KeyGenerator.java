@@ -24,6 +24,39 @@ public class KeyGenerator {
         CryptoModule cryptoModule = new CryptoModule(configuration);
 
         System.out.println("**************TEST**********");
+        // 23^11 = 16
+        // 23^8 = 20
+        // 13^-1 = 16
+        // mod = 137
+        // k=31
+        // m=62
+
+        // aX^y
+        System.out.println(cryptoModule.raiseAlphaXToPower(16, 8));
+        // aY^x
+        System.out.println(cryptoModule.raiseAlphaXToPower(20, 11));
+//        System.out.println(cryptoModule.raiseToPowWithNewOp(23, 11));
+//        System.out.println(cryptoModule.raiseToPowWithNewOp(23, 8));
+
+        // Проверка верхнего (не робит)
+        System.out.println(cryptoModule.newMultipleOperation("11", "8")); // 32
+        System.out.println(cryptoModule.raiseToPowWithNewOp(32)); // 37
+
+        // Тест 1
+//        System.out.println(cryptoModule.raiseToPowWithNewOp(17));
+//        System.out.println(cryptoModule.newMultipleOperation(String.valueOf(cryptoModule.raiseToPowWithNewOp(7)),
+//                String.valueOf(cryptoModule.raiseToPowWithNewOp(10))));
+
+
+
+        System.out.println(cryptoModule.raiseAlphaXToPower(16, 13));
+        System.out.println(cryptoModule.raiseAlphaXToPower(124, 16));
+        System.out.println(cryptoModule.raiseAlphaXToPower(16, 110));
+        System.out.println(cryptoModule.raiseToPowWithNewOp(76, ArithmeticModule.modInverse(110, 137)));
+
+        System.out.println(cryptoModule.getReverseMultiplyElement("13"));
+//        System.out.println(cryptoModule.newMultipleOperation("1", "110"));
+
 
 
         System.out.println(cryptoModule.raiseToPowWithNewOp(7, 110)); //result 101
@@ -39,11 +72,10 @@ public class KeyGenerator {
         long value = cryptoModule.raiseToPowWithNewOp(alphaXK, Long.parseLong(cryptoModule.multiply(String.valueOf(cryptoModule.getMultiplyNeutral()),
                 String.valueOf(ArithmeticModule.modInverse((int)K, (int)module)))));
         //Сточка ниже - alphaX^e
-        long val = cryptoModule.raiseToPowWithNewOp(value, cryptoModule.newMultipleOperation("1", String.valueOf(cryptoModule.getMultiplyNeutral())));
-        System.out.println("VAL " + val);
+        System.out.println("VAL " + value);
         //Проверка
         System.out.println(cryptoModule.raiseToPowWithNewOp(alphaX, neutral));
-//        for (int i=0; i < 137; i ++) {
+//        for (int i=0; i < 200; i ++) {
 //            if (cryptoModule.raiseToPowWithNewOp(alphaXK, i) == alphaX) {
 //                System.out.println("Otvet :" + i);
 //            }
@@ -53,22 +85,7 @@ public class KeyGenerator {
         System.out.println(cryptoModule.raiseToPowWithNewOp(value, Long.parseLong(cryptoModule.multiply("1",
                 String.valueOf(ArithmeticModule.modInverse((int)cryptoModule.getMultiplyNeutral(), 137))))));
 
-//        int K = 25;
-//        long alphaX = 7; //Надо найти
-//        long alphaXK = cryptoModule.raiseToPowWithNewOp(alphaX, K);
-//        System.out.println("AlphaXK: " + alphaXK);
-//        String reverseK = cryptoModule.getReverseMultiplyElement(String.valueOf(K));
-//        String mult = cryptoModule.multiply(String.valueOf(K), reverseK);
-//        cryptoModule.getReverseMultiplyElement(mult);
-//        System.out.println("Test: " + cryptoModule.getReverseMultiplyElement("85"));
-//        System.out.println("Test1: " + ArithmeticModule.modInverse(85, 137));
-//        long value = cryptoModule.raiseToPowWithNewOp(alphaXK, Long.parseLong(reverseK));
-//        System.out.println("Value: " + cryptoModule.raiseToPowWithNewOp(alphaXK, Long.parseLong(cryptoModule.getReverseMultiplyElement(mult))));
-//        int exponent = ArithmeticModule.modInverse(Integer.parseInt(cryptoModule.multiply(reverseK, String.valueOf(K))), 137);
-//        //long result = cryptoModule.raiseToPowWithNewOp(value, cryptoModule.newMultipleOperation("1", String.valueOf(cryptoModule.getMultiplyNeutral())));
-//        long result = cryptoModule.raiseToPowWithNewOp(alphaXK, ArithmeticModule.modInverse(K, 137));
-//
-//        System.out.println("AlphaX: " + result);
+
 
 
 //        BlockingQueue<String> queue = new LinkedBlockingQueue<>(10);

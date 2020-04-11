@@ -167,12 +167,18 @@ public class CryptoModule {
         Random rand = new Random(); // generate a random number
         return Integer.toString(rand.nextInt(Integer.parseInt(configuration.getModule())) - 1);
     }
-//
+
     public String multiply(String str1, String str2) {
         BigInteger bigStr1 = new BigInteger(str1);
         BigInteger bigStr2 = new BigInteger(str2);
         BigInteger bigModule = new BigInteger(configuration.getModule());
         return bigStr1.multiply(bigStr2).mod(bigModule).toString();
+    }
+    public String multiplyNoModule(String str1, String str2) {
+        BigInteger bigStr1 = new BigInteger(str1);
+        BigInteger bigStr2 = new BigInteger(str2);
+        BigInteger bigModule = new BigInteger(configuration.getModule());
+        return bigStr1.multiply(bigStr2).toString();
     }
 //
 //    public String getAdditiveInverse(String value) {
@@ -240,5 +246,21 @@ public class CryptoModule {
             val += mod;
         }
         return val;
+    }
+    public long raiseAlphaXToPower(long alphaX, long y) {
+        long k = Long.parseLong(configuration.getK());
+        long m = Long.parseLong(configuration.getM());
+        long mod = Long.parseLong(configuration.getModule());
+        long inverseM = ArithmeticModule.modInverse(Integer.parseInt(configuration.getM()), Integer.parseInt(configuration.getModule()));
+        long val1 = raiseToPowWithNewOp(alphaX, k);
+        long val2 = raiseToPowWithNewOp(Long.parseLong(multiplyNoModule(String.valueOf(k), String.valueOf(y))));
+        long val3 = raiseToPowWithNewOp(Long.parseLong(multiplyNoModule(String.valueOf(k), multiplyNoModule(String.valueOf(k-1), String.valueOf(inverseM)))));
+        long val4 = raiseToPowWithNewOp(alphaX, Long.parseLong(multiplyNoModule(String.valueOf(m), String.valueOf(y))));
+
+//        long result = Long.parseLong(multiply(String.valueOf(val1), multiply(String.valueOf(val2), multiply(String.valueOf(val3),
+//                String.valueOf(val4)))));
+        long result = newMultipleOperation(String.valueOf(val1), String.valueOf(newMultipleOperation(String.valueOf(val2),
+                String.valueOf(newMultipleOperation(String.valueOf(val3), String.valueOf(val4))))));
+        return result;
     }
 }
