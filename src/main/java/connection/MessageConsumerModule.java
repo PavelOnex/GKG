@@ -12,11 +12,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import configuration.PublicKeys;
 import dto.MessageDto;
 import math.CryptoModule;
 
-import static constants.Constants.GENERATION_STEP_HEADER;
-import static constants.Constants.LAST_STEP_HEADER;
+import static constants.Constants.*;
 
 public class MessageConsumerModule extends Thread {
     private MessageConsumer consumer;
@@ -231,6 +231,18 @@ public class MessageConsumerModule extends Thread {
                     //String key = cryptoModule.raiseValueToPower(value, cryptoValue);
                     String key = String.valueOf(cryptoModule.raiseToPowWithNewOp(Long.parseLong(value), Long.parseLong(cryptoValue)));
                     System.out.println("FINAL KEY:" + key);
+                } else if (messageDto.getMessageHeader().equals(INIT_HEADER)) {
+                    String value = messageDto.getConstantsMap().entrySet().iterator().next().getValue();
+                    PublicKeys publicKeys = new PublicKeys();
+                    publicKeys.init();
+                    Map<String, String> map = publicKeys.getAgentIdToPublicKey();
+                    map.put(messageDto.getSenderId(), value);
+                    String mapAsString = map.keySet().stream()
+                            .map(key -> key + PublicKeys.VALUES_DELIMITER + map.get(key))
+                            .collect(Collectors.joining(", "));
+                    publicKeys.refreshPKeys(mapAsString);
+                } else {
+                    System.out.println("ERROR: Received unknown command");
                 }
             } else {
                 System.out.println("Wrong recipient");

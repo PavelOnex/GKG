@@ -32,25 +32,28 @@ public class Configuration {
         this.m = m;
     }
 
-    private Map<String, String> agentIdToPublicKey;
+
     public Configuration(String configFileName) {
         this.configName = configFileName;
     }
-    private static final String PUBLIC_KEY_DELIMITER = ", ";
-    private static final String VALUES_DELIMITER = ":";
+    private static final String CONFIG_PATH_INTELLIJ = "target/classes/";
+    private boolean isRelease = false;
     public void getConfiguration() {
         Properties prop = new Properties();
         //InputStream inputStream = getClass().getClassLoader().getResourceAsStream(configName);
         InputStream inputStream = null;
 
         try {
-            inputStream = new FileInputStream("target/classes/" + configName);
+            inputStream = new FileInputStream(CONFIG_PATH_INTELLIJ + configName);
         } catch (FileNotFoundException e) {
-            System.out.println("Couldn't find file, trying again");
+            isRelease = true;
         }
-        try {
-            inputStream = new FileInputStream(configName);
-        } catch (FileNotFoundException e) {
+        if (isRelease) {
+            try {
+                inputStream = new FileInputStream(configName);
+            } catch (FileNotFoundException e) {
+                return;
+            }
         }
 
         if (inputStream != null) {
@@ -63,13 +66,6 @@ public class Configuration {
             brokerAddress = prop.getProperty("brokerAddress");
             alpha = prop.getProperty("alpha");
             module = prop.getProperty("module");
-            agentIdToPublicKey = new HashMap<>();
-            String[] publicKeys = prop.getProperty("publicKeys").split(PUBLIC_KEY_DELIMITER);
-            for(String key : publicKeys) {
-                String id = key.substring(0, key.indexOf(VALUES_DELIMITER));
-                String pkey = key.substring(key.indexOf(VALUES_DELIMITER) + 1);
-                agentIdToPublicKey.put(id, pkey);
-            }
             k=prop.getProperty("k");
             m=prop.getProperty("m");
         } else {

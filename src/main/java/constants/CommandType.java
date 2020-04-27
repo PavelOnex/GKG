@@ -6,7 +6,7 @@ public enum CommandType {
             "Should pass clients IDs for key generation process to command arguments.\n Example: \"route ag1 ag2 ag3\"."),
     INIT_KEY_PAIR_COMMAND("new pair", "new pair - Creates new public and private keys for current" +
             "client."),
-    PUBLISH_PUB_KEY_COMMAND("publish key", "publish keys - Sends public key value to all agents in group."),
+    PUBLISH_PUB_KEY_COMMAND("publish key", "publish key - Sends public key value to all agents in group."),
     AGENT_INFO_COMMAND("info", "info - Shows current agent information.");
 
     private String commandName;

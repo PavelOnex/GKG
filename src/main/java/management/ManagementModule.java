@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import configuration.Configuration;
 import configuration.ConnectionConfiguration;
+import configuration.PublicKeys;
 import connection.MessageProducerModule;
 import constants.CommandType;
 import constants.Constants;
@@ -35,10 +36,13 @@ public class ManagementModule {
 
     public Map<Boolean, String> processUserCommand(String userCommand) {
         Map<Boolean, String> result = new HashMap<>();
+        // exit command
         if (userCommand.equals(CommandType.EXIT_COMMAND.getCommandName())) {
             result.put(true, "Exit program....");
             return result;
-        } else if (userCommand.length() >= CommandType.INIT_KEY_PAIR_COMMAND.getCommandName().length()) {
+        }
+        // new pair command
+        if (userCommand.length() >= CommandType.INIT_KEY_PAIR_COMMAND.getCommandName().length()) {
             if (userCommand.substring(0, CommandType.INIT_KEY_PAIR_COMMAND.getCommandName().length())
                 .equals(CommandType.INIT_KEY_PAIR_COMMAND.getCommandName())) {
                 String skey = cryptoModule.generateSecretKey();
@@ -48,7 +52,9 @@ public class ManagementModule {
                 result.put(false, "New secret and public keys were saved");
                 return result;
             }
-        } else if (userCommand.length() > CommandType.ROUTE_COMMAND.getCommandName().length()) {
+        }
+        // route command
+        if (userCommand.length() > CommandType.ROUTE_COMMAND.getCommandName().length()) {
             if (userCommand.substring(0, CommandType.ROUTE_COMMAND.getCommandName().length() + 1)
                     .equals(CommandType.ROUTE_COMMAND.getCommandName() + " ")) {
                 String[] route = userCommand.substring(CommandType.ROUTE_COMMAND.getCommandName().length() + 1).split(ROUTE_DELIMITER);
@@ -96,6 +102,41 @@ public class ManagementModule {
                 }
                 return result;
             }
+        }
+        // publish key command
+        if (userCommand.equals(CommandType.PUBLISH_PUB_KEY_COMMAND.getCommandName())) {
+            String pubKey = cryptoModule.loadKeyValue(PUBLIC_KEY);
+            PublicKeys publicKeys = new PublicKeys();
+            publicKeys.init();
+            Map<String, String> map = publicKeys.getAgentIdToPublicKey();
+            map.put(configuration.getAgentId(), pubKey);
+            String mapAsString = map.keySet().stream()
+                    .map(key -> key + PublicKeys.VALUES_DELIMITER + map.get(key))
+                    .collect(Collectors.joining(", "));
+            publicKeys.refreshPKeys(mapAsString);
+            MessageDto messageDto = new MessageDto();
+            messageDto.setMessageHeader(Constants.INIT_HEADER);
+            messageDto.setSenderId(configuration.getAgentId());
+            Map<String, String> constantsMap = new HashMap<>();
+            constantsMap.put(configuration.getAgentId(), pubKey);
+            messageDto.setConstantsMap(constantsMap);
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                if (!entry.getValue().equals(configuration.getAgentId())) {
+                    MessageProducerModule messageProducerModule = new MessageProducerModule(entry.getKey(), connectionConfiguration);
+                    messageDto.setRecipientId(entry.getKey());
+                    ObjectMapper mapper = new ObjectMapper();
+                    String messageToSend = "";
+                    try {
+                        messageToSend = mapper.writeValueAsString(messageDto);
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+                    messageProducerModule.sendMessage(messageToSend);
+                }
+            }
+
+            result.put(false, "Key published");
+            return result;
         }
         result.put(false, "Error: Unknown command");
         processHelpCommand();
