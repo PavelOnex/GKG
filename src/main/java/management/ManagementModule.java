@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import configuration.Configuration;
 import configuration.ConnectionConfiguration;
 import connection.MessageProducerModule;
+import constants.CommandType;
 import constants.Constants;
 import dto.MessageDto;
 import math.CryptoModule;
@@ -30,61 +31,82 @@ public class ManagementModule {
 
         cryptoModule = new CryptoModule(configuration);
     }
+
+
     public Map<Boolean, String> processUserCommand(String userCommand) {
         Map<Boolean, String> result = new HashMap<>();
-        if (userCommand.equals(Constants.EXIT_DELIMITER)) {
+        if (userCommand.equals(CommandType.EXIT_COMMAND.getCommandName())) {
             result.put(true, "Exit program....");
             return result;
-        } else if (userCommand.substring(0, Constants.NEW_KEY_PAIR.length()).equals(Constants.NEW_KEY_PAIR)) {
-            String skey = cryptoModule.generateSecretKey();
-            String pkey = String.valueOf(cryptoModule.raiseToPowWithNewOp(Long.parseLong(skey)));
-            cryptoModule.saveKeyValue(pkey, PUBLIC_KEY);
-            cryptoModule.saveKeyValue(skey, PRIVATE_KEY);
-            result.put(false, "New secret and public keys were saved");
-            return result;
-        } else if (userCommand.substring(0, Constants.KEY_ROUTE_DELIMITER.length() + 1)
-                .equals(Constants.KEY_ROUTE_DELIMITER + " ")) {
-            String[] route = userCommand.substring(Constants.KEY_ROUTE_DELIMITER.length() + 1).split(ROUTE_DELIMITER);
-            List<String> routeList = new LinkedList<>(Arrays.asList(route));
-            String agentId = configuration.getAgentId();
-            if (routeList.contains(agentId)) {
-                routeList.remove(agentId);
-            } else {
-                result.put(false, "Wrong route: Route should contain current agent ID");
+        } else if (userCommand.length() >= CommandType.INIT_KEY_PAIR_COMMAND.getCommandName().length()) {
+            if (userCommand.substring(0, CommandType.INIT_KEY_PAIR_COMMAND.getCommandName().length())
+                .equals(CommandType.INIT_KEY_PAIR_COMMAND.getCommandName())) {
+                String skey = cryptoModule.generateSecretKey();
+                String pkey = String.valueOf(cryptoModule.raiseToPowWithNewOp(Long.parseLong(skey)));
+                cryptoModule.saveKeyValue(pkey, PUBLIC_KEY);
+                cryptoModule.saveKeyValue(skey, PRIVATE_KEY);
+                result.put(false, "New secret and public keys were saved");
                 return result;
             }
-            String r = cryptoModule.generateSecretKey();
-            //String constant = cryptoModule.raiseAlphaToPower(r);
-            String constant = String.valueOf(cryptoModule.raiseToPowWithNewOp(Long.parseLong(r)));
+        } else if (userCommand.length() > CommandType.ROUTE_COMMAND.getCommandName().length()) {
+            if (userCommand.substring(0, CommandType.ROUTE_COMMAND.getCommandName().length() + 1)
+                    .equals(CommandType.ROUTE_COMMAND.getCommandName() + " ")) {
+                String[] route = userCommand.substring(CommandType.ROUTE_COMMAND.getCommandName().length() + 1).split(ROUTE_DELIMITER);
+                List<String> routeList = new LinkedList<>(Arrays.asList(route));
+                String agentId = configuration.getAgentId();
+                if (routeList.contains(agentId)) {
+                    routeList.remove(agentId);
+                } else {
+                    result.put(false, "Wrong route: Route should contain current agent ID");
+                    processHelpCommand();
+                    return result;
+                }
+                if (!routeList.isEmpty()) {
+                    String r = cryptoModule.generateSecretKey();
+                    //String constant = cryptoModule.raiseAlphaToPower(r);
+                    String constant = String.valueOf(cryptoModule.raiseToPowWithNewOp(Long.parseLong(r)));
 
-            Map<String, String> map = new HashMap<>();
-            map.put(agentId, constant);
-            MessageDto messageDto = new MessageDto();
-            messageDto.setMessageHeader(Constants.GENERATION_STEP_HEADER);
-            messageDto.setSenderId(agentId);
-            messageDto.setKeyRoutePassed(agentId);
-            messageDto.setKeyRouteRemaining(routeList.stream().map(n -> String.valueOf(n))
-                    .collect(Collectors.joining(" ")));
-            messageDto.setRecipientId(routeList.get(0));
-            messageDto.setConstantsMap(map);
-            ObjectMapper mapper = new ObjectMapper();
-            String messageToSend = "";
-            try {
-                messageToSend = mapper.writeValueAsString(messageDto);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                    Map<String, String> map = new HashMap<>();
+                    map.put(agentId, constant);
+                    MessageDto messageDto = new MessageDto();
+                    messageDto.setMessageHeader(Constants.GENERATION_STEP_HEADER);
+                    messageDto.setSenderId(agentId);
+                    messageDto.setKeyRoutePassed(agentId);
+                    messageDto.setKeyRouteRemaining(routeList.stream().map(n -> String.valueOf(n))
+                            .collect(Collectors.joining(" ")));
+                    messageDto.setRecipientId(routeList.get(0));
+                    messageDto.setConstantsMap(map);
+                    ObjectMapper mapper = new ObjectMapper();
+                    String messageToSend = "";
+                    try {
+                        messageToSend = mapper.writeValueAsString(messageDto);
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        queue.put(r);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    MessageProducerModule messageProducerModule = new MessageProducerModule(messageDto.getRecipientId(), connectionConfiguration);
+                    messageProducerModule.sendMessage(messageToSend);
+                    result.put(false, "Key generation was started");
+                } else {
+                    result.put(false, "Wrong route: Route doesn't contains any other clients");
+                }
+                return result;
             }
-            try {
-                queue.put(r);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            MessageProducerModule messageProducerModule = new MessageProducerModule(messageDto.getRecipientId(), connectionConfiguration);
-            messageProducerModule.sendMessage(messageToSend);
-            result.put(false, "Key generation was started");
-            return result;
         }
-        result.put(false, "Unknown command");
+        result.put(false, "Error: Unknown command");
+        processHelpCommand();
         return result;
+    }
+    private void processHelpCommand() {
+        System.out.println(Constants.COMMANDS_LIST);
+        System.out.println(CommandType.AGENT_INFO_COMMAND.getDescription());
+        System.out.println(CommandType.EXIT_COMMAND.getDescription());
+        System.out.println(CommandType.ROUTE_COMMAND.getDescription());
+        System.out.println(CommandType.INIT_KEY_PAIR_COMMAND.getDescription());
+        System.out.println(CommandType.PUBLISH_PUB_KEY_COMMAND.getDescription());
     }
 }

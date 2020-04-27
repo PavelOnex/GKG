@@ -15,7 +15,7 @@ public class MessageDto {
     //Маршрут выработки ключа ключа, который был пройден
     private String keyRoutePassed;
     //Мршрут выработки ключа, который осталось пройти
-    private String KeyRouteRemaining;
+    private String keyRouteRemaining;
     //Мапа с вычисленными константами
     private Map<String, String> constantsMap;
 
@@ -36,11 +36,11 @@ public class MessageDto {
     }
 
     public String getKeyRouteRemaining() {
-        return KeyRouteRemaining;
+        return keyRouteRemaining;
     }
 
     public void setKeyRouteRemaining(String keyRouteRemaining) {
-        KeyRouteRemaining = keyRouteRemaining;
+        this.keyRouteRemaining = keyRouteRemaining;
     }
 
     public String getMessageHeader() {

@@ -17,8 +17,12 @@ import org.apache.commons.codec.DecoderException;
 
 public class CryptoModule {
     private Configuration configuration;
+    private long elementOrder;
     public CryptoModule(Configuration configuration) {
         this.configuration = configuration;
+    }
+    public void init() {
+        elementOrder = getElementOrder();
     }
 
     @Deprecated
@@ -147,10 +151,7 @@ public class CryptoModule {
     }
 
     public String getReverseMultiplyElement(String value) {
-//        BigInteger bigModule = new BigInteger(configuration.getModule());
-//        BigInteger bigK = new BigInteger(configuration.getK());
-//        BigInteger bigM = new BigInteger(configuration.getM());
-//        BigInteger bigValue = new BigInteger(value);
+
         int k = Integer.parseInt(configuration.getK());
         int m = Integer.parseInt(configuration.getM());
         int module = Integer.parseInt(configuration.getModule());
@@ -163,6 +164,7 @@ public class CryptoModule {
         return answer.toString();
     }
 
+
     public String generateSecretKey() {
         Random rand = new Random(); // generate a random number
         return Integer.toString(rand.nextInt(Integer.parseInt(configuration.getModule())) - 1);
@@ -172,6 +174,7 @@ public class CryptoModule {
         BigInteger bigStr1 = new BigInteger(str1);
         BigInteger bigStr2 = new BigInteger(str2);
         BigInteger bigModule = new BigInteger(configuration.getModule());
+//        bigModule = new BigInteger(String.valueOf(getAdditiveNeutral()));
         return bigStr1.multiply(bigStr2).mod(bigModule).toString();
     }
     public String multiplyNoModule(String str1, String str2) {
@@ -180,6 +183,19 @@ public class CryptoModule {
         BigInteger bigModule = new BigInteger(configuration.getModule());
         return bigStr1.multiply(bigStr2).toString();
     }
+    public long getElementOrder() {
+        int i = 2;
+        while (i < Integer.parseInt(configuration.getModule())) {
+            i ++ ;
+            if (raiseToPowWithNewOp((int) i) == Long.parseLong(configuration.getAlpha())) {
+                System.out.println("Order" + (i-1));
+                return i - 1;
+            }
+        }
+        return 0;
+    }
+
+
 //
 //    public String getAdditiveInverse(String value) {
 //        BigInteger bigValue = new BigInteger(value);
@@ -190,6 +206,17 @@ public class CryptoModule {
 //        }
 //        return bigValue.toString();
 //    }
+    public long getAdditiveNeutral() {
+        long k = Long.parseLong(configuration.getK());
+        long m = Long.parseLong(configuration.getM());
+        long mod = Long.parseLong(configuration.getModule());
+        long inverseM = ArithmeticModule.modInverse(Integer.parseInt(configuration.getM()), Integer.parseInt(configuration.getModule()));
+        long val = -1*k*inverseM;
+        while (val < 0) {
+            val += mod;
+        }
+        return val;
+    }
 
 
     public long binpow (int a, int n) {
@@ -214,10 +241,43 @@ public class CryptoModule {
         BigInteger bigValue = bigM.multiply(bigValue1.add(kdivm)).multiply(bigValue2.add(kdivm)).add(kdivm.negate());
         return bigValue.mod(bigModule).longValue();
     }
+    public long newMultipleOperationNoMod(String value1, String value2) {
+        long k = Long.parseLong(configuration.getK());
+        long m = Long.parseLong(configuration.getM());
+        long mod = Long.parseLong(configuration.getModule());
+        long inverseM = ArithmeticModule.modInverse(Integer.parseInt(configuration.getM()), Integer.parseInt(configuration.getModule()));
+        return Long.parseLong(multiplyNoModule(value1, String.valueOf(k))) +
+                Long.parseLong(multiplyNoModule(String.valueOf(k), String.valueOf(value2))) +
+                Long.parseLong(multiplyNoModule(String.valueOf(k), multiplyNoModule(String.valueOf(k-1),
+                        String.valueOf(inverseM)))) +
+                Long.parseLong(multiplyNoModule(String.valueOf(m), multiplyNoModule(value1, String.valueOf(value2))));
+    }
+
+    public long takeMod(long val1) {
+        long mod = Long.parseLong(configuration.getModule());
+        long val  =val1;
+        while (val < 0) {
+            val += mod;
+        }
+        return val;
+    }
+
+
+    public String newMultipleOperationStr(String value1, String value2) {
+        BigInteger bigValue1 = new BigInteger(value1);
+        BigInteger bigValue2 = new BigInteger(value2);
+        BigInteger bigModule = new BigInteger(configuration.getModule());
+        BigInteger bigK = new BigInteger(configuration.getK());
+        BigInteger bigM = new BigInteger(configuration.getM());
+        BigInteger reverseM = new BigInteger(String.valueOf(ArithmeticModule
+                .modInverse(Integer.parseInt(bigM.toString()), Integer.parseInt(bigModule.toString()))));
+        BigInteger kdivm = bigK.multiply(reverseM);
+        BigInteger bigValue = bigM.multiply(bigValue1.add(kdivm)).multiply(bigValue2.add(kdivm)).add(kdivm.negate());
+        return bigValue.toString();
+    }
 
 
     public long raiseToPowWithNewOp(long value, long pow) {
-
         if (pow == 0)
             return getMultiplyNeutral();
         if (pow % 2 == 1)
@@ -226,12 +286,35 @@ public class CryptoModule {
             long b = raiseToPowWithNewOp (value, pow/2);
             return newMultipleOperation(String.valueOf(b), String.valueOf(b));
         }
-//        long val = value;
-//        for (int i = 1; i< pow; i++) {
-//            val = newMultipleOperation(String.valueOf(val), String.valueOf(value));
-//        }
-//        return val;
     }
+
+    public BigInteger raiseToPowWithNewOpBigInt(BigInteger value, BigInteger pow) {
+        if (pow.equals(new BigInteger("0")))
+            return new BigInteger(String.valueOf(getMultiplyNeutral()));
+        if (pow.mod(new BigInteger("2")).equals(new BigInteger("1")))
+            return newMultipleOperationBigInt(raiseToPowWithNewOpBigInt(value, pow.subtract(new BigInteger("1"))), value);
+        else {
+            BigInteger b = raiseToPowWithNewOpBigInt(value, pow.divide(new BigInteger("2")));
+            return newMultipleOperationBigInt(b, b);
+        }
+    }
+
+    public BigInteger newMultipleOperationBigInt(BigInteger bigValue1, BigInteger bigValue2) {
+        BigInteger bigModule = new BigInteger(configuration.getModule());
+        BigInteger bigK = new BigInteger(configuration.getK());
+        BigInteger bigM = new BigInteger(configuration.getM());
+        BigInteger reverseM = new BigInteger(String.valueOf(ArithmeticModule
+                .modInverse(Integer.parseInt(bigM.toString()), Integer.parseInt(bigModule.toString()))));
+        BigInteger kdivm = bigK.multiply(reverseM);
+        BigInteger bigValue = bigM.multiply(bigValue1.add(kdivm)).multiply(bigValue2.add(kdivm)).add(kdivm.negate());
+        return bigValue;
+    }
+
+
+
+
+
+
     public long raiseToPowWithNewOp(long pow) {
         return this.raiseToPowWithNewOp(Long.parseLong(configuration.getAlpha()), pow);
     }
@@ -247,20 +330,38 @@ public class CryptoModule {
         }
         return val;
     }
+
+    public long raiseAlphaXToPower(long y) {
+        return this.raiseAlphaXToPower(Long.parseLong(configuration.getAlpha()), y);
+    }
     public long raiseAlphaXToPower(long alphaX, long y) {
+//        long k = Long.parseLong(configuration.getK());
+//        long m = Long.parseLong(configuration.getM());
+//        long mod = Long.parseLong(configuration.getModule());
+//        long inverseM = ArithmeticModule.modInverse(Integer.parseInt(configuration.getM()), Integer.parseInt(configuration.getModule()));
+//        long val1 = raiseToPowWithNewOp(alphaX, k);
+//        long val2 = raiseToPowWithNewOp(Long.parseLong(multiplyNoModule(String.valueOf(k), String.valueOf(y))));
+//        long val3 = raiseToPowWithNewOp(Long.parseLong(multiplyNoModule(String.valueOf(k), multiplyNoModule(String.valueOf(k-1), String.valueOf(inverseM)))));
+//        long val4 = raiseToPowWithNewOp(alphaX, Long.parseLong(multiplyNoModule(String.valueOf(m), String.valueOf(y))));
+//        long result = newMultipleOperation(String.valueOf(val1), String.valueOf(newMultipleOperation(String.valueOf(val2),
+//                String.valueOf(newMultipleOperation(String.valueOf(val3), String.valueOf(val4))))));
+//        return result;
         long k = Long.parseLong(configuration.getK());
         long m = Long.parseLong(configuration.getM());
         long mod = Long.parseLong(configuration.getModule());
         long inverseM = ArithmeticModule.modInverse(Integer.parseInt(configuration.getM()), Integer.parseInt(configuration.getModule()));
         long val1 = raiseToPowWithNewOp(alphaX, k);
+
         long val2 = raiseToPowWithNewOp(Long.parseLong(multiplyNoModule(String.valueOf(k), String.valueOf(y))));
-        long val3 = raiseToPowWithNewOp(Long.parseLong(multiplyNoModule(String.valueOf(k), multiplyNoModule(String.valueOf(k-1), String.valueOf(inverseM)))));
+
+        long val3 = raiseToPowWithNewOp(Long.parseLong(multiplyNoModule(String.valueOf(k),
+                multiplyNoModule(String.valueOf(k-1), String.valueOf(inverseM)))));
         long val4 = raiseToPowWithNewOp(alphaX, Long.parseLong(multiplyNoModule(String.valueOf(m), String.valueOf(y))));
 
-//        long result = Long.parseLong(multiply(String.valueOf(val1), multiply(String.valueOf(val2), multiply(String.valueOf(val3),
-//                String.valueOf(val4)))));
-        long result = newMultipleOperation(String.valueOf(val1), String.valueOf(newMultipleOperation(String.valueOf(val2),
-                String.valueOf(newMultipleOperation(String.valueOf(val3), String.valueOf(val4))))));
+
+        long result = newMultipleOperation(String.valueOf(val1), String.valueOf(newMultipleOperationNoMod(String.valueOf(val2),
+                String.valueOf(newMultipleOperationNoMod(String.valueOf(val3), String.valueOf(val4))))));
         return result;
+
     }
 }
