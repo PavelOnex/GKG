@@ -141,7 +141,6 @@ public class MessageConsumerModule extends Thread {
                         replyMessage.setKeyRouteRemaining("none");
                         replyMessage.setSenderId(agentId);
                         replyMessage.setKeyRoutePassed(messageDto.getKeyRoutePassed() + " " + agentId);
-
                         //String key = cryptoModule.raiseValueToPower(constantsMap.get(maxExponentKey), r);
                         String key = String.valueOf(cryptoModule.raiseToPowWithNewOp(Long.parseLong(constantsMap.get(maxExponentKey)),
                                 Long.parseLong(r)));
@@ -155,7 +154,6 @@ public class MessageConsumerModule extends Thread {
                                 //valueForAgent = cryptoModule.raiseValueToPower(constantsMap.get(result), r);
                                 valueForAgent = String.valueOf(cryptoModule.raiseToPowWithNewOp(Long.parseLong(constantsMap.get(result)),
                                         Long.parseLong(r)));
-
                                 keyForAgent = result + " " + agentId;
                             } else {
                                 //valueForAgent = cryptoModule.raiseValueToPower(r);
@@ -197,6 +195,9 @@ public class MessageConsumerModule extends Thread {
 
                                 map.put(result + " " + agentId, valueForAgent);
                             }
+                            map.put(maxExponentKey, constantsMap.get(maxExponentKey));
+                            map.put(maxExponentKey + " " + agentId, String.valueOf(cryptoModule.raiseToPowWithNewOp(Long.parseLong(constantsMap.get(maxExponentKey)),
+                                    Long.parseLong(r))));
                         } else {
                             map.put(list.get(0), constantsMap.get(list.get(0)));
                             //map.put(agentId, cryptoModule.raiseValueToPower(r));
