@@ -138,16 +138,33 @@ public class ManagementModule {
             result.put(false, "Key published");
             return result;
         }
+        // info command
+        if (userCommand.equals(CommandType.AGENT_INFO_COMMAND.getCommandName())) {
+            processInfoCommand();
+            result.put(false, "Current agent info.");
+            return result;
+        }
         result.put(false, "Error: Unknown command");
         processHelpCommand();
         return result;
     }
+    private void processInfoCommand() {
+        System.out.println("*************************");
+        System.out.println(Constants.SYSTEM_INFO);
+        System.out.println("Agent ID \t" + configuration.getAgentId());
+        System.out.println("Public Key \t" + cryptoModule.loadKeyValue(PUBLIC_KEY));
+        System.out.println("Broker address \t" + configuration.getBrokerAddress());
+        System.out.println("*************************");
+    }
     private void processHelpCommand() {
+        configuration.getConfiguration();
+        System.out.println("*************************");
         System.out.println(Constants.COMMANDS_LIST);
         System.out.println(CommandType.AGENT_INFO_COMMAND.getDescription());
         System.out.println(CommandType.EXIT_COMMAND.getDescription());
         System.out.println(CommandType.ROUTE_COMMAND.getDescription());
         System.out.println(CommandType.INIT_KEY_PAIR_COMMAND.getDescription());
         System.out.println(CommandType.PUBLISH_PUB_KEY_COMMAND.getDescription());
+        System.out.println("*************************");
     }
 }

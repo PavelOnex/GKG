@@ -14,4 +14,5 @@ public class Constants {
 
     //Info
     public static final String COMMANDS_LIST = "COMMANDS LIST:";
+    public static final String SYSTEM_INFO = "SYSTEM INFO:";
 }
