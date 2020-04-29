@@ -7,8 +7,8 @@ public enum CommandType {
     INIT_KEY_PAIR_COMMAND("new pair", "new pair - Creates new public and private keys for current" +
             "client."),
     PUBLISH_PUB_KEY_COMMAND("publish key", "publish key - Sends public key value to all agents in group."),
-    AGENT_INFO_COMMAND("info", "info - Shows current agent information.");
-
+    AGENT_INFO_COMMAND("info", "info - Shows current agent information."),
+    HELP_COMMAND("help", "help - Shows supported console commands.");
     private String commandName;
     private String description;
     CommandType(String commandName, String description) {

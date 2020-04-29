@@ -121,7 +121,7 @@ public class ManagementModule {
             constantsMap.put(configuration.getAgentId(), pubKey);
             messageDto.setConstantsMap(constantsMap);
             for (Map.Entry<String, String> entry : map.entrySet()) {
-                if (!entry.getValue().equals(configuration.getAgentId())) {
+                if (!entry.getKey().equals(configuration.getAgentId())) {
                     MessageProducerModule messageProducerModule = new MessageProducerModule(entry.getKey(), connectionConfiguration);
                     messageDto.setRecipientId(entry.getKey());
                     ObjectMapper mapper = new ObjectMapper();
@@ -142,6 +142,12 @@ public class ManagementModule {
         if (userCommand.equals(CommandType.AGENT_INFO_COMMAND.getCommandName())) {
             processInfoCommand();
             result.put(false, "Current agent info.");
+            return result;
+        }
+        // help command
+        if (userCommand.equals(CommandType.HELP_COMMAND.getCommandName())) {
+            processHelpCommand();
+            result.put(false, "Help command.");
             return result;
         }
         result.put(false, "Error: Unknown command");
